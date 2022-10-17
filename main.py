@@ -134,7 +134,7 @@ def main():
     degraded_image2 = cv2.imread(param[2])
     Canny_image = cv2.Canny(degraded_image2, 10, 100)
     Canny_image = mirror_padding(Canny_image, PADDING_SIZE)
-    filter1, filter2 = lsm.calc_filter_init2(original_image, degraded_image, FILTER_LENGTH, PADDING_SIZE, Canny_image)
+    filter1, filter2 = lsm.lsm_point_symmetry2(original_image, degraded_image, FILTER_LENGTH, PADDING_SIZE, Canny_image)
     
     print("filter ------------------------------------")
     print(filter1)
