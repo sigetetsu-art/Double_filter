@@ -47,7 +47,7 @@ def filtering(padding_image, filter):
     return filtered_img
 
 
-def filtering2(degraded_image, filter1, filter2, Canny_image):
+def filtering2(degraded_image, filter1, filter2, binary_image):
     filter1 = np.array(filter1)
     filter2 = np.array(filter2)
     h, w = degraded_image.shape #h:画像の高さ w:画像の幅 
@@ -55,9 +55,9 @@ def filtering2(degraded_image, filter1, filter2, Canny_image):
     
     for y in range(PADDING_SIZE, h - PADDING_SIZE):
         for x in range(PADDING_SIZE, w - PADDING_SIZE):
-            if(Canny_image[y][x] == 255): #エッジ用のフィルタ処理
+            if(binary_image[y][x] == 255): #エッジ用のフィルタ処理
                 filtered_image[y - PADDING_SIZE][x - PADDING_SIZE] = np.sum(degraded_image[y - PADDING_SIZE : y + PADDING_SIZE + 1, x - PADDING_SIZE : x + PADDING_SIZE + 1] * filter1)
-            elif(Canny_image[y][x] == 0):
+            elif(binary_image[y][x] == 0):
                 filtered_image[y - PADDING_SIZE][x - PADDING_SIZE] = np.sum(degraded_image[y - PADDING_SIZE : y + PADDING_SIZE + 1, x - PADDING_SIZE : x + PADDING_SIZE + 1] * filter2)
 
     filtered_image[filtered_image < 0] = 0
@@ -115,6 +115,15 @@ def ssim_cal(original_img, filtered_img, original_mu=None, original_sigma_sq=Non
 def img2canny(image):
     return np.array(cv2.Canny(image, 10, 100))
 
+def Border_detection(degraded_image):
+    h, w = degraded_image.shape
+    binary_image = np.zeros(degraded_image.shape)
+    
+    for i in range(h):
+        for j in range(w):
+            if(i % 7 == 0 or j % 7 == 0):
+                binary_image[i][j] = 255
+    return binary_image
 
 def main():
     param = sys.argv
@@ -129,12 +138,15 @@ def main():
     print("SSIM of original image and degraded image : ", np.mean(first_ssim))
     first_PSNR = psnr.calc_psnr(original_image, degraded_image)
     print("PSNR of original image and degraded image : ", first_PSNR)
-    
+
+    binary_image = Border_detection(degraded_image)
+    binary_image = mirror_padding(degraded_image, PADDING_SIZE)
+    h, w = binary_image.shape
+    print(h, w)
     degraded_image = mirror_padding(degraded_image, PADDING_SIZE)
-    degraded_image2 = cv2.imread(param[2])
-    Canny_image = cv2.Canny(degraded_image2, 10, 100)
-    Canny_image = mirror_padding(Canny_image, PADDING_SIZE)
-    filter1, filter2 = lsm.lsm_point_symmetry2(original_image, degraded_image, FILTER_LENGTH, PADDING_SIZE, Canny_image)
+    h1, w1 = degraded_image.shape
+    print(h1, w1)
+    filter1, filter2 = lsm.calc_filter_init2(original_image, degraded_image, FILTER_LENGTH, PADDING_SIZE, binary_image)
     
     print("filter ------------------------------------")
     print(filter1)
@@ -142,7 +154,7 @@ def main():
     print("filter2------------------------------------")
     print(filter2)
     print("-------------------------------------------")
-    filtered_image = filtering2(degraded_image, filter1, filter2, Canny_image)
+    filtered_image = filtering2(degraded_image, filter1, filter2, binary_image)
     ssim, filtered_mu, filtered_sigma_sq, covariance = ssim_cal(original_image, filtered_image, original_mu, original_sigma_sq)
     print("first SSIM : ", np.mean(ssim))
     PSNR = psnr.calc_psnr(original_image, filtered_image)
