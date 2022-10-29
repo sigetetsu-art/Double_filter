@@ -47,7 +47,7 @@ def filtering(padding_image, filter):
     return filtered_img
 
 
-def filtering2(degraded_image, filter1, filter2, binary_image):
+def filtering2(degraded_image, filter1, filter2, Canny_image):
     filter1 = np.array(filter1)
     filter2 = np.array(filter2)
     h, w = degraded_image.shape #h:画像の高さ w:画像の幅 
@@ -55,9 +55,9 @@ def filtering2(degraded_image, filter1, filter2, binary_image):
     
     for y in range(PADDING_SIZE, h - PADDING_SIZE):
         for x in range(PADDING_SIZE, w - PADDING_SIZE):
-            if(binary_image[y][x] == 255): #エッジ用のフィルタ処理
+            if(Canny_image[y][x] == 255): #エッジ用のフィルタ処理
                 filtered_image[y - PADDING_SIZE][x - PADDING_SIZE] = np.sum(degraded_image[y - PADDING_SIZE : y + PADDING_SIZE + 1, x - PADDING_SIZE : x + PADDING_SIZE + 1] * filter1)
-            elif(binary_image[y][x] == 0):
+            elif(Canny_image[y][x] == 0):
                 filtered_image[y - PADDING_SIZE][x - PADDING_SIZE] = np.sum(degraded_image[y - PADDING_SIZE : y + PADDING_SIZE + 1, x - PADDING_SIZE : x + PADDING_SIZE + 1] * filter2)
 
     filtered_image[filtered_image < 0] = 0
@@ -123,6 +123,7 @@ def Border_detection(degraded_image):
         for j in range(w):
             if(i % 7 == 0 or j % 7 == 0):
                 binary_image[i][j] = 255
+    
     return binary_image
 
 def main():
@@ -140,12 +141,10 @@ def main():
     print("PSNR of original image and degraded image : ", first_PSNR)
 
     binary_image = Border_detection(degraded_image)
-    binary_image = mirror_padding(degraded_image, PADDING_SIZE)
-    h, w = binary_image.shape
-    print(h, w)
+    binary_image = mirror_padding(np.array(binary_image), PADDING_SIZE)
+    
     degraded_image = mirror_padding(degraded_image, PADDING_SIZE)
-    h1, w1 = degraded_image.shape
-    print(h1, w1)
+    
     filter1, filter2 = lsm.calc_filter_init2(original_image, degraded_image, FILTER_LENGTH, PADDING_SIZE, binary_image)
     
     print("filter ------------------------------------")

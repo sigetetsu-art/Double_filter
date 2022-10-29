@@ -42,7 +42,7 @@ def calc_filter_init2(original_image, degraded_image, FILTER_LENGTH, PADDING_SIZ
     filter2 = (lsm(filter_target2, original_target2)).reshape(FILTER_LENGTH, FILTER_LENGTH)
     return filter, filter2
 
-def lsm_point_symmetry2(original_image, degraded_img, FILTER_LENGTH, PADDING_SIZE, Canny_Image):
+def lsm_point_symmetry2(original_image, degraded_img, FILTER_LENGTH, PADDING_SIZE, binary_image):
     FILTER_SIZE = FILTER_LENGTH*FILTER_LENGTH
     h, w = degraded_img.shape
     filter_target = []
@@ -53,13 +53,13 @@ def lsm_point_symmetry2(original_image, degraded_img, FILTER_LENGTH, PADDING_SIZ
     
     for y in range(PADDING_SIZE, h-PADDING_SIZE):
         for x in range(PADDING_SIZE, w-PADDING_SIZE):
-            if(Canny_Image[y][x] == 255):
+            if(binary_image[y][x] == 255):
                 tmp1 = np.array((degraded_img[y-PADDING_SIZE:y+PADDING_SIZE+1, x-PADDING_SIZE:x+PADDING_SIZE+1]).reshape(FILTER_SIZE), dtype='float64')
                 tmp2 = tmp1[:int((FILTER_SIZE-1)/2)] + tmp1[:int((FILTER_SIZE-1)/2):-1]
                 tmp2 = np.append(tmp2, tmp1[int((FILTER_SIZE-1)/2)])
                 filter_target.append(tmp2)
                 original_target1.append(original_image[y][x])
-            elif(Canny_Image[y][x] == 0):
+            elif(binary_image[y][x] == 0):
                 tmp3 = np.array((degraded_img[y-PADDING_SIZE:y+PADDING_SIZE+1, x-PADDING_SIZE:x+PADDING_SIZE+1]).reshape(FILTER_SIZE), dtype='float64')
                 tmp4 = tmp3[:int((FILTER_SIZE-1)/2)] + tmp3[:int((FILTER_SIZE-1)/2):-1]
                 tmp4 = np.append(tmp4, tmp3[int((FILTER_SIZE-1)/2)])
